@@ -1,14 +1,31 @@
-// server.js - Express server for Render.com
+// server.js - Fixed CORS configuration
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const bodyParser = require('body-parser');
 const app = express();
 
-// Enable CORS for your Netlify site
+// Get allowed origins from environment variable or use default
+const clientOrigin = process.env.ALLOWED_ORIGIN || 'https://prompt-kitchen.netlify.app';
+
+// Improved CORS configuration to handle both with and without trailing slash
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGIN || '*', // Ideally set this to your Netlify domain
-  methods: ['POST', 'OPTIONS'],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Handle both with and without trailing slash
+    const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+    const normalizedAllowed = clientOrigin.endsWith('/') ? clientOrigin.slice(0, -1) : clientOrigin;
+    
+    if (normalizedOrigin === normalizedAllowed) {
+      callback(null, true);
+    } else {
+      console.log(`Rejecting CORS request from: ${origin}, allowed: ${clientOrigin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
