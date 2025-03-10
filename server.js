@@ -123,7 +123,7 @@ app.post('/api/enhance-prompt', async (req, res) => {
   }
 });
 
-// Helper function to create system message
+// Helper function to create system message - UPDATED VERSION
 function createSystemMessage(activeTechniques) {
   // Build instructions based on active techniques
   const techniqueInstructions = activeTechniques.map(technique => {
@@ -159,10 +159,16 @@ function createSystemMessage(activeTechniques) {
     }
   }).filter(Boolean);
 
+  // Get only the active technique names for warning
+  const activeTechniqueNames = activeTechniques.map(t => t.name.replace(/\s/g, '').replace(/[^a-zA-Z0-9]/g, '')).join(", ");
+
   return `
 You are an AI Prompt Improvement Expert. Your job is to REWRITE and ENHANCE the user's prompt to make it more effective for getting better responses from AI assistants. DO NOT answer the prompt itself.
 
 IMPORTANT: You are not supposed to answer the user's question. Instead, rewrite their prompt to make it better.
+
+SELECTED TECHNIQUES: ${activeTechniqueNames}
+You should ONLY apply these selected techniques to improve the prompt. DO NOT use techniques that aren't listed above.
 
 Apply these enhancement techniques to the user's prompt and structure your response by marking the sections with tags as requested:
 ${techniqueInstructions.map(inst => `- ${inst}`).join('\n')}
@@ -171,25 +177,10 @@ IMPORTANT FORMATTING INSTRUCTIONS:
 - When adding structure, vary your formatting approach. Use bullet points (•), dashes (-), or headers instead of always using numbered lists.
 - For complex topics, consider using bold headers (**Section Title**) instead of numbers.
 - The prompt should feel cohesive, not like a mechanical list of separate points.
-- **Crucially, for each applied technique, please wrap the corresponding part of the enhanced prompt in the requested tags (e.g., [ClearLanguage]...[/ClearLanguage]).**
-- Use tags based on the technique names, removing spaces and special characters.
-- If a technique is not applicable to a section, do not add tags.
-
-EXAMPLES:
-Original prompt: "Tell me about climate change"
-
-Enhanced prompt:
-[AddContext]Climate change is a critical global issue affecting ecosystems, economies, and communities worldwide. Understanding its causes, impacts, and potential solutions is essential for informed decision-making.[/AddContext]
-
-[BeSpecific]Provide a comprehensive analysis of climate change covering:
-- The primary anthropogenic and natural causes
-- Major environmental impacts observed in the past decade
-- Economic consequences across different regions
-- Current international policy frameworks
-- Technological innovations for mitigation
-- Adaptation strategies for vulnerable communities[/BeSpecific]
-
-[ClearLanguage]Please include data-driven evidence and cite scientific consensus where relevant. Distinguish between established facts and areas of ongoing research.[/ClearLanguage]
+- **Crucially, for each applied technique, please wrap the corresponding part of the enhanced prompt in the requested tags.**
+- DO NOT use techniques or tags that weren't specified in the SELECTED TECHNIQUES list above.
+- There is no need to follow any predefined template or structure.
+- Each prompt should be unique and specifically tailored to the user's request.
 
 INSTRUCTION: Respond ONLY with the enhanced prompt. DO NOT answer the original question.
 `;
